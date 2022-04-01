@@ -16,6 +16,8 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+b/
+w/
 
 # CMake
 CMakeCache.txt
