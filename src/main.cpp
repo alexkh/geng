@@ -117,7 +117,7 @@ public:
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	const std::string assetpath = "";
 #else
-	const std::string assetpath = "./../data/";
+	const std::string assetpath = "./";
 #endif
 
 	bool rotateModel = false;
@@ -156,8 +156,7 @@ public:
 	int32_t debugViewEquation = 0;
 
 	VulkanExample(): VulkanExampleBase() {
-		title =
-	"Vulkan glTF 2.0 PBR - (C) Sascha Willems (www.saschawillems.de)";
+		title = "Game Engine Renderer Demo";
 #if defined(TINYGLTF_ENABLE_DRACO)
 		std::cout << "Draco mesh compression is enabled" << std::endl;
 #endif
@@ -295,7 +294,12 @@ public:
 		glm::vec4(primitive->material.extension.specularFactor, 1.0f);
 					}
 
-					vkCmdPushConstants(commandBuffers[cbIndex], pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstBlockMaterial), &pushConstBlockMaterial);
+					vkCmdPushConstants(
+						commandBuffers[cbIndex],
+						pipelineLayout,
+						VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+						sizeof(PushConstBlockMaterial),
+						&pushConstBlockMaterial);
 
 					if(primitive->hasIndices) {
 						vkCmdDrawIndexed(commandBuffers[
@@ -420,8 +424,8 @@ public:
 		animationIndex = 0;
 		animationTimer = 0.0f;
 		models.scene.loadFromFile(filename, vulkanDevice, queue);
-		camera.setPosition({ 0.0f, 0.0f, 1.0f });
-		camera.setRotation({ 0.0f, 0.0f, 0.0f });
+		camera.setPosition({ 1.0f, 2.0f, 4.0f });
+		camera.setRotation({ 0.0f, 0.0f, 1.0f });
 	}
 
 	void loadEnvironment(std::string filename) {
@@ -441,7 +445,7 @@ public:
 		tinygltf::asset_manager = androidApp->activity->assetManager;
 		readDirectory(assetpath + "models", "*.gltf", scenes, true);
 #else
-		const std::string assetpath = "./../data/";
+		const std::string assetpath = "./";
 		struct stat info;
 		if(stat(assetpath.c_str(), &info) != 0) {
 			std::string msg = "Could not locate asset path in \"" +
@@ -450,14 +454,18 @@ assetpath + "\".\nMake sure binary is run from correct relative directory!";
 			exit(-1);
 		}
 #endif
-		readDirectory(assetpath + "environments", "*.ktx", environments,
+		readDirectory(assetpath, "*.ktx", environments,
 				false);
-		textures.empty.loadFromFile(assetpath + "textures/empty.ktx",
+		textures.empty.loadFromFile(assetpath + "empty.ktx",
 				VK_FORMAT_R8G8B8A8_UNORM, vulkanDevice, queue);
-		std::string sceneFile = assetpath +
-			"models/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf";
-		std::string envMapFile = assetpath +
-				"environments/papermill.ktx";
+		std::string sceneFile =
+//			assetpath +
+//			"models/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf";
+			"./Lake4.glb";
+		std::string envMapFile =
+//			assetpath + "environments/papermill.ktx";
+			"./mountain.ktx";
+//			"./pisa_cube.ktx";
 		for(size_t i = 0; i < args.size(); i++) {
 			if(std::string(args[i]).find(".gltf") !=
 					std::string::npos) {
@@ -480,7 +488,7 @@ assetpath + "\".\nMake sure binary is run from correct relative directory!";
 		}
 		loadScene(sceneFile.c_str());
 		models.skybox.loadFromFile(assetpath +
-		"models/Box/glTF-Embedded/Box.gltf", vulkanDevice, queue);
+		"Box.gltf", vulkanDevice, queue);
 		loadEnvironment(envMapFile.c_str());
 	}
 
@@ -816,7 +824,7 @@ assetpath + "\".\nMake sure binary is run from correct relative directory!";
 					descriptorSets[i].skybox;
 			writeDescriptorSets[2].dstBinding = 2;
 			writeDescriptorSets[2].pImageInfo =
-					&textures.prefilteredCube.descriptor;
+					&textures.environmentCube.descriptor;
 
 			vkUpdateDescriptorSets(device, static_cast<uint32_t>(
 	writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
@@ -838,8 +846,9 @@ assetpath + "\".\nMake sure binary is run from correct relative directory!";
 				VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		rasterizationStateCI.lineWidth = 1.0f;
 		VkPipelineColorBlendAttachmentState blendAttachmentState{};
-		blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
-VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		blendAttachmentState.colorWriteMask =
+			VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+			VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 		blendAttachmentState.blendEnable = VK_FALSE;
 		VkPipelineColorBlendStateCreateInfo colorBlendStateCI{};
 		colorBlendStateCI.sType =
@@ -1570,7 +1579,9 @@ VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 			// Pipeline layout
 			VkPipelineLayout pipelinelayout;
 			VkPushConstantRange pushConstantRange{};
-			pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+			pushConstantRange.stageFlags =
+					VK_SHADER_STAGE_VERTEX_BIT |
+					VK_SHADER_STAGE_FRAGMENT_BIT;
 			switch(target) {
 			case IRRADIANCE:
 				pushConstantRange.size =
@@ -1797,7 +1808,8 @@ vulkanDevice->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, false);
 						pushBlockPrefilterEnv.mvp =
 	glm::perspective((float)(M_PI / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
 						pushBlockPrefilterEnv.roughness
-					= (float)m / (float)(numMips - 1);
+//					= (float)m / (float)(numMips - 1);
+					= 0.0;
 						vkCmdPushConstants(cmdBuf,
 pipelinelayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
 			sizeof(PushBlockPrefilterEnv), &pushBlockPrefilterEnv);
@@ -1994,12 +2006,15 @@ VK_PIPELINE_BIND_POINT_GRAPHICS, pipelinelayout, 0, 1, &descriptorset, 0, NULL);
 		shaderValuesScene.view = camera.matrices.view;
 
 		// Center and scale model
-		float scale = (1.0f / std::max(models.scene.aabb[0][0],
+/*		float scale = (1.0f / std::max(models.scene.aabb[0][0],
 	std::max(models.scene.aabb[1][1], models.scene.aabb[2][2]))) * 0.5f;
 		glm::vec3 translate = -glm::vec3(models.scene.aabb[3][0],
 	models.scene.aabb[3][1], models.scene.aabb[3][2]);
 		translate += -0.5f * glm::vec3(models.scene.aabb[0][0],
 	models.scene.aabb[1][1], models.scene.aabb[2][2]);
+*/
+		float scale = 1.0f;
+		glm::vec3 translate = glm::vec3(0.0f, 0.0f, 0.0f);
 
 		shaderValuesScene.model = glm::mat4(1.0f);
 		shaderValuesScene.model[0][0] = scale;
@@ -2044,11 +2059,11 @@ VK_PIPELINE_BIND_POINT_GRAPHICS, pipelinelayout, 0, 1, &descriptorset, 0, NULL);
 		VulkanExampleBase::prepare();
 		camera.type = Camera::CameraType::firstperson;
 		camera.setPerspective(45.0f, (float)width /
-				(float)height, 0.1f, 256.0f);
+				(float)height, 0.01f, 2560.0f);
 		camera.rotationSpeed = 0.25f;
-		camera.movementSpeed = 0.1f;
-		camera.setPosition({ 0.0f, 0.0f, 1.0f });
-		camera.setRotation({ 0.0f, 0.0f, 0.0f });
+		camera.movementSpeed = 10.0f;
+		camera.setPosition({ 0.3f, 0.2f, 3.0f });
+		camera.setRotation({ 1.0f, 0.0f, 0.0f });
 
 		waitFences.resize(renderAhead);
 		presentCompleteSemaphores.resize(renderAhead);
@@ -2135,13 +2150,17 @@ VK_PIPELINE_BIND_POINT_GRAPHICS, pipelinelayout, 0, 1, &descriptorset, 0, NULL);
 		ImGui::SetNextWindowSize(ImVec2(200 * scale,
 				(models.scene.animations.size() > 0 ? 440 : 360)
 				* scale), ImGuiSetCond_Always);
-		ImGui::Begin("Vulkan glTF 2.0 PBR", nullptr,
+		ImGui::Begin("Game Engine Renderer", nullptr,
 			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 		ImGui::PushItemWidth(100.0f * scale);
-		ui->text("www.saschawillems.de");
+		ui->text("Demo Version 0.1");
 		ui->text("%.1d fps (%.2f ms)", lastFPS, (1000.0f / lastFPS));
-
-		if(ui->header("Scene")) {
+		ui->text("Pos: %.1f %.1f %.1f", camera.position.x,
+			camera.position.y, camera.position.z);
+		ui->text("Rot: %.1f %.1f %.1f", camera.rotation.x,
+			camera.rotation.y, camera.rotation.z);
+//		if(ui->header("Scene")) {
+		if(false) {
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 			if(ui->combo("File", selectedScene, scenes)) {
 				vkDeviceWaitIdle(device);

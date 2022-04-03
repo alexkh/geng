@@ -113,10 +113,10 @@ public:
 		if(type == CameraType::firstperson) {
 			if(moving()) {
 				glm::vec3 camFront;
-				camFront.x = -cos(glm::radians(rotation.x)) *
-						sin(glm::radians(rotation.y));
-				camFront.y = sin(glm::radians(rotation.x));
-				camFront.z = cos(glm::radians(rotation.x)) *
+				camFront.x = cos(glm::radians(rotation.x)) *
+						-sin(glm::radians(rotation.y));
+				camFront.y = 0; //sin(glm::radians(rotation.x));
+				camFront.z = -cos(glm::radians(rotation.x)) *
 						cos(glm::radians(rotation.y));
 				camFront = glm::normalize(camFront);
 
@@ -127,10 +127,10 @@ public:
 				if (keys.down)
 					position -= camFront * moveSpeed;
 				if (keys.left)
-					position -= glm::normalize(glm::cross(
+					position += glm::normalize(glm::cross(
 			camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
 				if (keys.right)
-					position += glm::normalize(glm::cross(
+					position -= glm::normalize(glm::cross(
 			camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
 				updateViewMatrix();
 			}
